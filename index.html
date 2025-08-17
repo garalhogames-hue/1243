@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Player Rádio</title>
+<style>
+  :root{font-family:system-ui,Segoe UI,Roboto,Arial}
+  body{margin:0;background:#0f1222;color:#e9ecff;min-height:100vh;display:grid;place-items:center}
+  .card{width:min(600px,92vw);background:#171a2e;border:1px solid #2a2f52;border-radius:16px;padding:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  .tile{background:#0f1230;border:1px solid #2a2f52;border-radius:12px;padding:12px}
+  .label{font-size:.75rem;opacity:.7;margin-bottom:4px}
+  .value{font-weight:600;word-break:break-word}
+  .controls{display:flex;gap:10px;align-items:center}
+  .btn{cursor:pointer;border:0;background:#5960ff;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700}
+  .btn[disabled]{opacity:.6;cursor:not-allowed}
+  .vol{flex:1}
+  .hint{margin-top:10px;font-size:.85rem;opacity:.7}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h3 style="margin:0 0 8px">Rádio – Player</h3>
+
+    <div class="grid">
+      <div class="tile"><div class="label">Locutor</div><div id="dj" class="value">—</div></div>
+      <div class="tile"><div class="label">Programação</div><div id="program" class="value">—</div></div>
+      <div class="tile"><div class="label">Ouvintes</div><div id="listeners" class="value">—</div></div>
+      <div class="tile"><div class="label">Música agora</div><div id="song" class="value">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button id="playBtn" class="btn">▶️ Tocar</button>
+      <button id="pauseBtn" class="btn" disabled>⏸️ Pausar</button>
+      <input id="volume" class="vol" type="range" min="0" max="100" value="80">
+    </div>
+
+    <div id="msg" class="hint"></div>
+
+    <audio id="radio" preload="none" playsinline></audio>
+  </div>
+
+<script>
+  // seu mount MP3
+  const STREAM_URL = "http://sonicpanel.oficialserver.com:8342/;mp3";
+  // endpoint local que junta Stream Title/Genre + Ouvintes (suba status.php na mesma pasta)
+  const STATUS_ENDPOINT = "./status.php";
+
+  const audio = document.getElementById("radio");
+  const playBtn = document.getElementById("playBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const vol = document.getElementById("volume");
+  const elDj = document.getElementById("dj");
+  const elProgram = document.getElementById("program");
+  const elListeners = document.getElementById("listeners");
+  const elSong = document.getElementById("song");
+  const msg = document.getElementById("msg");
+
+  audio.volume = Number(vol.value)/100;
+  vol.addEventListener("input", ()=> audio.volume = Number(vol.value)/100);
+
+  function resetAudio(){
+    audio.pause();
+    audio.src = "";
+    audio.load();
+  }
+
+  function playLive(){
+    // sempre força reconexão "ao vivo" (zera buffer e usa cache-buster)
+    resetAudio();
+    audio.src = STREAM_URL + "?t=" + Date.now();
+    audio.load();
+    audio.play().then(()=>{
+      playBtn.disabled = true;
+      pauseBtn.disabled = false;
+      msg.textContent = "Conectado.";
+    }).catch(err=>{
+      msg.textContent = "Clique no botão para tocar (autoplay bloqueado) ou verifique HTTPS/codec.";
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+    });
+  }
+
+  function pauseLive(){
+    resetAudio(); // não retomar de onde parou
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    msg.textContent = "Pausado.";
+  }
+
+  playBtn.addEventListener("click", playLive);
+  pauseBtn.addEventListener("click", pauseLive);
+
+  // -------- status (locutor, programação, ouvintes) ----------
+  const last = { dj:null, program:null, listeners:null, song:null };
+  async function fetchStatus(){
+    try{
+      const r = await fetch(STATUS_ENDPOINT + "?ts=" + Date.now(), { cache:"no-store" });
+      const d = await r.json();
+      if (d && d.ok !== false){
+        if (d.dj) last.dj = d.dj;
+        if (d.program) last.program = d.program;
+        if (Number.isFinite(d.listeners)) last.listeners = d.listeners;
+        if (d.song) last.song = d.song;
+        elDj.textContent = last.dj ?? "—";
+        elProgram.textContent = last.program ?? "—";
+        elListeners.textContent = last.listeners ?? "—";
+        elSong.textContent = last.song ?? "—";
+        if (d.serverUp === false) msg.textContent = "Servidor offline.";
+      }
+    }catch(e){ /* silencioso */ }
+  }
+  fetchStatus();
+  setInterval(fetchStatus, 10000);
+</script>
+</body>
+</html>
