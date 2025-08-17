@@ -7,59 +7,128 @@
 <style>
   :root{font-family:system-ui,Segoe UI,Roboto,Arial}
   body{margin:0;background:#0f1222;color:#e9ecff;min-height:100vh;display:grid;place-items:center}
-  .card{width:min(600px,92vw);background:#171a2e;border:1px solid #2a2f52;border-radius:16px;padding:20px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
-  .tile{background:#0f1230;border:1px solid #2a2f52;border-radius:12px;padding:12px}
-  .label{font-size:.75rem;opacity:.7;margin-bottom:4px}
-  .value{font-weight:600;word-break:break-word}
-  .controls{display:flex;gap:10px;align-items:center}
-  .btn{cursor:pointer;border:0;background:#5960ff;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700}
-  .btn[disabled]{opacity:.6;cursor:not-allowed}
-  .vol{flex:1}
-  .hint{margin-top:10px;font-size:.85rem;opacity:.7}
+  .card{width:min(650px,92vw);background:#171a2e;border:1px solid #2a2f52;border-radius:16px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.4)}
+  
+  .header{display:flex;align-items:center;gap:20px;margin-bottom:20px}
+  .avatar{width:80px;height:80px;border-radius:12px;background:#0f1230;background-size:contain;background-position:center;background-repeat:no-repeat;border:2px solid #2a2f52;image-rendering:pixelated}
+  .header-info{flex:1}
+  .header-info h3{margin:0 0 4px;font-size:1.25rem}
+  .header-info .subtitle{opacity:.7;font-size:.875rem}
+  
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+  .tile{background:#0f1230;border:1px solid #2a2f52;border-radius:12px;padding:14px}
+  .tile.full{grid-column:1/-1}
+  .label{font-size:.75rem;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+  .value{font-weight:600;word-break:break-word;font-size:1.1rem}
+  
+  .controls{display:flex;gap:10px;align-items:center;margin:20px 0}
+  .btn{cursor:pointer;border:0;background:#5960ff;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;transition:all 0.2s;font-size:.95rem}
+  .btn:hover:not([disabled]){background:#6b71ff;transform:translateY(-1px)}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .btn.pause{background:#ff5960}
+  .btn.pause:hover:not([disabled]){background:#ff6b71}
+  
+  .volume-control{flex:1;display:flex;align-items:center;gap:10px;background:#0f1230;padding:8px 12px;border-radius:10px;border:1px solid #2a2f52}
+  .volume-icon{opacity:.7}
+  .vol{flex:1;appearance:none;height:4px;background:#2a2f52;border-radius:2px;outline:none}
+  .vol::-webkit-slider-thumb{appearance:none;width:16px;height:16px;background:#5960ff;border-radius:50%;cursor:pointer}
+  .vol::-moz-range-thumb{width:16px;height:16px;background:#5960ff;border-radius:50%;cursor:pointer;border:none}
+  .vol-value{min-width:35px;text-align:right;font-size:.875rem;opacity:.7}
+  
+  .status-bar{background:#0f1230;border:1px solid #2a2f52;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+  .status-indicator{width:8px;height:8px;border-radius:50%;background:#ff5960;animation:pulse 2s infinite}
+  .status-indicator.online{background:#5fff60}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .status-text{font-size:.875rem;opacity:.8}
+  
+  .song-display{background:linear-gradient(135deg, #0f1230, #1a1f3a);border:1px solid #2a2f52;border-radius:12px;padding:16px;margin-top:12px}
+  .song-label{font-size:.75rem;opacity:.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+  .song-text{font-size:1.05rem;font-weight:500;line-height:1.4}
 </style>
 </head>
 <body>
   <div class="card">
-    <h3 style="margin:0 0 8px">Rádio – Player</h3>
+    <div class="header">
+      <div id="avatar" class="avatar"></div>
+      <div class="header-info">
+        <h3>Rádio Online</h3>
+        <div class="subtitle">24 horas de música</div>
+      </div>
+    </div>
 
     <div class="grid">
-      <div class="tile"><div class="label">Locutor</div><div id="dj" class="value">—</div></div>
-      <div class="tile"><div class="label">Programação</div><div id="program" class="value">—</div></div>
-      <div class="tile"><div class="label">Ouvintes</div><div id="listeners" class="value">—</div></div>
-      <div class="tile"><div class="label">Música agora</div><div id="song" class="value">—</div></div>
+      <div class="tile">
+        <div class="label">Locutor</div>
+        <div id="dj" class="value">—</div>
+      </div>
+      <div class="tile">
+        <div class="label">Programação</div>
+        <div id="program" class="value">—</div>
+      </div>
+      <div class="tile">
+        <div class="label">Ouvintes</div>
+        <div id="listeners" class="value">—</div>
+      </div>
+      <div class="tile">
+        <div class="label">Status</div>
+        <div id="status" class="value">—</div>
+      </div>
+    </div>
+
+    <div class="song-display">
+      <div class="song-label">Tocando agora</div>
+      <div id="song" class="song-text">—</div>
     </div>
 
     <div class="controls">
       <button id="playBtn" class="btn">▶️ Tocar</button>
-      <button id="pauseBtn" class="btn" disabled>⏸️ Pausar</button>
-      <input id="volume" class="vol" type="range" min="0" max="100" value="80">
+      <button id="pauseBtn" class="btn pause" disabled>⏸️ Pausar</button>
+      <div class="volume-control">
+        <span class="volume-icon">🔊</span>
+        <input id="volume" class="vol" type="range" min="0" max="100" value="80">
+        <span id="volValue" class="vol-value">80%</span>
+      </div>
     </div>
 
-    <div id="msg" class="hint"></div>
+    <div class="status-bar">
+      <div id="statusIndicator" class="status-indicator"></div>
+      <div id="statusText" class="status-text">Desconectado</div>
+    </div>
 
     <audio id="radio" preload="none" playsinline></audio>
   </div>
 
 <script>
-  // seu mount MP3
+  // ====== CONFIGURAÇÕES ======
   const STREAM_URL = "http://sonicpanel.oficialserver.com:8342/;mp3";
-  // endpoint local que junta Stream Title/Genre + Ouvintes (suba status.php na mesma pasta)
   const STATUS_ENDPOINT = "./status.php";
-
+  const AVATAR_TEMPLATE = "https://habblive.in/imager.php?user=%username%&action=drk=667&size=l&head_direction=3&direction=4&gesture=spk&headonly=1";
+  const DEFAULT_AVATAR_USER = "Blume"; // Avatar padrão para AutoDJ
+  
+  // ====== ELEMENTOS DOM ======
   const audio = document.getElementById("radio");
   const playBtn = document.getElementById("playBtn");
   const pauseBtn = document.getElementById("pauseBtn");
   const vol = document.getElementById("volume");
+  const volValue = document.getElementById("volValue");
   const elDj = document.getElementById("dj");
   const elProgram = document.getElementById("program");
   const elListeners = document.getElementById("listeners");
   const elSong = document.getElementById("song");
-  const msg = document.getElementById("msg");
+  const elStatus = document.getElementById("status");
+  const elAvatar = document.getElementById("avatar");
+  const statusIndicator = document.getElementById("statusIndicator");
+  const statusText = document.getElementById("statusText");
 
+  // ====== CONTROLE DE VOLUME ======
   audio.volume = Number(vol.value)/100;
-  vol.addEventListener("input", ()=> audio.volume = Number(vol.value)/100);
+  vol.addEventListener("input", () => {
+    const value = Number(vol.value);
+    audio.volume = value/100;
+    volValue.textContent = value + "%";
+  });
 
+  // ====== CONTROLE DE ÁUDIO ======
   function resetAudio(){
     audio.pause();
     audio.src = "";
@@ -67,52 +136,180 @@
   }
 
   function playLive(){
-    // sempre força reconexão "ao vivo" (zera buffer e usa cache-buster)
     resetAudio();
     audio.src = STREAM_URL + "?t=" + Date.now();
     audio.load();
-    audio.play().then(()=>{
+    audio.play().then(() => {
       playBtn.disabled = true;
       pauseBtn.disabled = false;
-      msg.textContent = "Conectado.";
-    }).catch(err=>{
-      msg.textContent = "Clique no botão para tocar (autoplay bloqueado) ou verifique HTTPS/codec.";
+      statusIndicator.classList.add("online");
+      statusText.textContent = "Conectado e tocando";
+    }).catch(err => {
+      statusText.textContent = "Erro ao conectar - clique para tentar novamente";
       playBtn.disabled = false;
       pauseBtn.disabled = true;
+      statusIndicator.classList.remove("online");
     });
   }
 
   function pauseLive(){
-    resetAudio(); // não retomar de onde parou
+    resetAudio();
     playBtn.disabled = false;
     pauseBtn.disabled = true;
-    msg.textContent = "Pausado.";
+    statusIndicator.classList.remove("online");
+    statusText.textContent = "Pausado";
   }
 
   playBtn.addEventListener("click", playLive);
   pauseBtn.addEventListener("click", pauseLive);
 
-  // -------- status (locutor, programação, ouvintes) ----------
-  const last = { dj:null, program:null, listeners:null, song:null };
-  async function fetchStatus(){
-    try{
-      const r = await fetch(STATUS_ENDPOINT + "?ts=" + Date.now(), { cache:"no-store" });
-      const d = await r.json();
-      if (d && d.ok !== false){
-        if (d.dj) last.dj = d.dj;
-        if (d.program) last.program = d.program;
-        if (Number.isFinite(d.listeners)) last.listeners = d.listeners;
-        if (d.song) last.song = d.song;
-        elDj.textContent = last.dj ?? "—";
-        elProgram.textContent = last.program ?? "—";
-        elListeners.textContent = last.listeners ?? "—";
-        elSong.textContent = last.song ?? "—";
-        if (d.serverUp === false) msg.textContent = "Servidor offline.";
-      }
-    }catch(e){ /* silencioso */ }
+  // ====== DETECÇÃO DE AUTODJ ======
+  function isAutoDJ(djName) {
+    if (!djName || djName === "—" || djName === "") return true;
+    
+    // Padrões que indicam AutoDJ (case insensitive)
+    const autoDJPatterns = [
+      "autodj",
+      "auto dj",
+      "auto-dj",
+      "radio habblive",
+      "habblive",
+      "blume",
+      "radiobot",
+      "bot",
+      "automatic",
+      "automático",
+      "automático dj"
+    ];
+    
+    const djLower = djName.toLowerCase().trim();
+    
+    // Verifica se o nome contém algum dos padrões
+    return autoDJPatterns.some(pattern => {
+      // Verifica correspondência exata
+      if (djLower === pattern) return true;
+      // Verifica se contém o padrão
+      if (djLower.includes(pattern)) return true;
+      return false;
+    });
   }
+
+  // ====== ATUALIZAÇÃO DE AVATAR ======
+  function updateAvatar(djName, isAuto) {
+    if (!AVATAR_TEMPLATE) return;
+    
+    let username = DEFAULT_AVATAR_USER;
+    
+    if (!isAuto && djName) {
+      // Usa o nome do locutor diretamente, sem substituir espaços
+      username = djName.trim();
+    }
+    
+    const avatarUrl = AVATAR_TEMPLATE.replace("%username%", encodeURIComponent(username));
+    elAvatar.style.backgroundImage = `url(${avatarUrl})`;
+    
+    // Adiciona tratamento de erro para imagem não encontrada
+    const img = new Image();
+    img.onerror = function() {
+      // Se falhar ao carregar o avatar do locutor, usa o padrão
+      const fallbackUrl = AVATAR_TEMPLATE.replace("%username%", encodeURIComponent(DEFAULT_AVATAR_USER));
+      elAvatar.style.backgroundImage = `url(${fallbackUrl})`;
+    };
+    img.src = avatarUrl;
+  }
+
+  // ====== BUSCA DE STATUS ======
+  const lastData = { 
+    dj: null, 
+    program: null, 
+    listeners: null, 
+    song: null,
+    serverUp: true 
+  };
+  
+  async function fetchStatus(){
+    try {
+      const response = await fetch(STATUS_ENDPOINT + "?ts=" + Date.now(), { 
+        cache: "no-store",
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data && data.ok !== false) {
+        // Atualiza os dados recebidos
+        if (data.dj !== null && data.dj !== undefined) {
+          lastData.dj = data.dj;
+        }
+        if (data.program !== null && data.program !== undefined) {
+          lastData.program = data.program;
+        }
+        if (Number.isFinite(data.listeners)) {
+          lastData.listeners = data.listeners;
+        }
+        if (data.song !== null && data.song !== undefined) {
+          lastData.song = data.song;
+        }
+        if (data.serverUp !== undefined) {
+          lastData.serverUp = data.serverUp;
+        }
+        
+        // Processa o nome do DJ
+        let displayDJ = "AutoDJ";
+        let displayProgram = "Tocando as melhores!";
+        let isAuto = true;
+        
+        // Verifica se tem um DJ real (não AutoDJ)
+        if (lastData.dj && lastData.dj.trim() !== "") {
+          const djName = lastData.dj.trim();
+          
+          if (!isAutoDJ(djName)) {
+            // É um locutor real
+            displayDJ = djName;
+            displayProgram = lastData.program || "Programa ao vivo";
+            isAuto = false;
+          }
+        }
+        
+        // Atualiza a interface
+        elDj.textContent = displayDJ;
+        elProgram.textContent = displayProgram;
+        elListeners.textContent = lastData.listeners !== null ? lastData.listeners : "0";
+        elSong.textContent = lastData.song || "—";
+        
+        // Atualiza o avatar
+        updateAvatar(displayDJ, isAuto);
+        
+        // Status do servidor
+        if (lastData.serverUp) {
+          elStatus.textContent = "Online";
+          elStatus.style.color = "#5fff60";
+        } else {
+          elStatus.textContent = "Offline";
+          elStatus.style.color = "#ff5960";
+          statusText.textContent = "Servidor offline";
+        }
+        
+      }
+    } catch(error) {
+      console.error("Erro ao buscar status:", error);
+      elStatus.textContent = "Erro";
+      elStatus.style.color = "#ff5960";
+    }
+  }
+  
+  // ====== INICIALIZAÇÃO ======
   fetchStatus();
-  setInterval(fetchStatus, 10000);
+  setInterval(fetchStatus, 8000); // Atualiza a cada 8 segundos como no script.js original
+  
+  // Status inicial
+  statusText.textContent = "Pronto para tocar";
 </script>
 </body>
 </html>
